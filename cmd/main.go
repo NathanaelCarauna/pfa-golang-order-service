@@ -1,19 +1,30 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
 
-	"github.com/nathanaelcarauna/pfa-go/internal/order/entity"
+	"github.com/nathanaelcarauna/pfa-go/internal/order/infra/database"
+	"github.com/nathanaelcarauna/pfa-go/internal/order/usecase"
 )
 
 func main() {
-	order, err := entity.NewOrder("123", 10, 2)
+	db, err := sql.Open("mysql", "root:root@tcp(mysql:3306)/orders")
 	if err != nil {
 		panic(err)
 	}
-	err = order.CalculateFinalPrice()
+	defer db.Close()
+	repository := database.NewOrderRepository(db)
+	uc := usecase.NewCalculateFinalPriceUseCase(repository)
+
+	input := usecase.OrderInputDTO{
+		ID:    "1234",
+		Price: 100,
+		Tax:   10,
+	}
+	output, err := uc.Execute(input)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("The final price is: %f\n", order.FinalPrice)
+	println(output.FinalPrice)
+
 }
